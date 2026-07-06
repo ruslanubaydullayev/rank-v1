@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+/*
+  Ranking Shorts — dark, YouTube-inspired theme.
+  Black / dark-gray surfaces, white text, red accent.
+  Colors declared here in @theme generate utilities:
+  bg-bg, bg-surface, bg-surface-2, text-muted, text-accent, border-border, etc.
+*/
+@theme {
+  --color-bg: #0f0f0f; /* app background (YT dark) */
+  --color-surface: #181818; /* cards / panels */
+  --color-surface-2: #212121; /* raised elements */
+  --color-border: #303030;
+  --color-muted: #aaaaaa;
+
+  --color-accent: #ff0033; /* red accent */
+  --color-accent-hover: #e6002e;
+
+  --color-primary: var(--color-accent);
+
+  --font-sans:
+    "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter",
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-border, currentColor);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: #ffffff;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 select-none;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 select-none bg-accent text-white hover:bg-accent-hover active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 select-none bg-white/5 text-white hover:bg-white/10 active:scale-[0.98];
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 select-none border border-border text-white hover:bg-white/5;
+  }
+  .card {
+    @apply rounded-2xl border border-border bg-surface p-6;
+  }
+  .input {
+    @apply w-full rounded-xl border border-border bg-surface-2 px-4 py-3 text-white outline-none transition placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/30;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-muted;
+  }
+}
+
+/* Reusable transitions for step + route changes. */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateX(16px);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-16px);
+}
+
+.page-enter-active,
+.page-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
