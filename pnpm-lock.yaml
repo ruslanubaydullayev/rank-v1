@@ -69,9 +69,6 @@ importers:
       '@nuxt/eslint-config':
         specifier: ^1.15.2
         version: 1.15.2(@typescript-eslint/utils@8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.2))(@vue/compiler-sfc@3.5.39)(eslint-import-resolver-node@0.3.9)(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.2)
-      '@oxc-parser/binding-darwin-arm64':
-        specifier: 0.117.0
-        version: 0.117.0
       '@types/sortablejs':
         specifier: ^1.15.9
         version: 1.15.9
@@ -9789,7 +9786,8 @@ snapshots:
   '@oxc-parser/binding-android-arm64@0.138.0':
     optional: true
 
-  '@oxc-parser/binding-darwin-arm64@0.117.0': {}
+  '@oxc-parser/binding-darwin-arm64@0.117.0':
+    optional: true
 
   '@oxc-parser/binding-darwin-arm64@0.132.0':
     optional: true
