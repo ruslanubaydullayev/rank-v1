@@ -51,13 +51,25 @@ export async function downloadWithYtDlp(
   outPath: string,
   { timeoutMs = 90_000 }: { timeoutMs?: number } = {},
 ): Promise<void> {
-  const bin = useRuntimeConfig().ytDlpPath;
+  const config = useRuntimeConfig();
+  const bin = config.ytDlpPath;
+
+  // Instagram/TikTok increasingly gate public media behind a session. Pass
+  // cookies when configured so downloads succeed.
+  const cookieArgs: string[] = [];
+  if (config.ytDlpCookiesFile) {
+    cookieArgs.push("--cookies", config.ytDlpCookiesFile);
+  } else if (config.ytDlpCookiesFromBrowser) {
+    cookieArgs.push("--cookies-from-browser", config.ytDlpCookiesFromBrowser);
+  }
+
   const res = await runCommand(
     bin,
     [
       "--no-playlist",
       "--no-warnings",
       "--force-overwrites",
+      ...cookieArgs,
       // Prefer a single mp4 stream when available for simpler downstream muxing.
       "-f",
       "mp4/bestvideo*+bestaudio/best",
@@ -80,10 +92,37 @@ export async function downloadWithYtDlp(
     console.error("[yt-dlp] failed:", res.stderr.slice(-800));
     throw createError({
       statusCode: 422,
-      statusMessage:
-        "Couldn't fetch this link. It may be private, removed, or unsupported.",
+      statusMessage: classifyYtDlpError(res.stderr, Boolean(cookieArgs.length)),
     });
   }
+}
+
+/**
+ * Turn yt-dlp stderr into a user-actionable message. Instagram in particular
+ * now needs authentication for most posts, so we call that out explicitly.
+ */
+function classifyYtDlpError(stderr: string, hasCookies: boolean): string {
+  const s = stderr.toLowerCase();
+
+  if (
+    s.includes("empty media response") ||
+    s.includes("login required") ||
+    s.includes("requires authentication") ||
+    s.includes("use --cookies") ||
+    s.includes("rate-limit") ||
+    s.includes("429")
+  ) {
+    return hasCookies
+      ? "This post needs a logged-in account and the configured session couldn't access it. It may be private, age-restricted, or the session expired."
+      : "Instagram requires a logged-in session to fetch this clip. Upload the video from your device instead, or configure yt-dlp cookies on the server.";
+  }
+  if (s.includes("private")) {
+    return "This post is private. Only public posts can be imported.";
+  }
+  if (s.includes("unable to extract") || s.includes("not a valid url")) {
+    return "Couldn't read a video from this link. Paste a link to a specific Reel or post (not a profile or homepage).";
+  }
+  return "Couldn't fetch this link. It may be private, removed, or unsupported.";
 }
 
 /** Probe a media file's duration in seconds (null if unknown). */

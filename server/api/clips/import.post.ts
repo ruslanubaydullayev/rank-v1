@@ -11,7 +11,11 @@ import {
   probeDurationSeconds,
 } from "~~/server/utils/media";
 import { useStorage } from "~~/server/utils/storage";
-import { detectPlatform, importClipSchema } from "~~/server/utils/validation";
+import {
+  detectPlatform,
+  importClipSchema,
+  isImportableInstagramUrl,
+} from "~~/server/utils/validation";
 
 /**
  * POST /api/clips/import
@@ -27,6 +31,14 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 422,
       statusMessage: "Only Instagram and TikTok links are supported.",
+    });
+  }
+
+  if (platform === "instagram" && !isImportableInstagramUrl(body.url)) {
+    throw createError({
+      statusCode: 422,
+      statusMessage:
+        "Paste a link to a specific Reel or post (e.g. instagram.com/reel/...), not a profile or homepage.",
     });
   }
 
