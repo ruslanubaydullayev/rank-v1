@@ -176,7 +176,7 @@ async function onFilePicked(e: Event) {
             v-model="newLabel"
             class="input"
             placeholder="e.g. The substitute teacher"
-            maxlength="80"
+            maxlength="30"
           />
         </div>
 
@@ -284,7 +284,7 @@ async function onFilePicked(e: Event) {
               :value="item.label"
               class="w-full rounded-md bg-transparent text-sm font-medium outline-none focus:bg-surface-2 focus:px-2 focus:py-1"
               placeholder="Add a label…"
-              maxlength="80"
+              maxlength="30"
               @input="
                 store.updateItem(item.uid, {
                   label: ($event.target as HTMLInputElement).value,

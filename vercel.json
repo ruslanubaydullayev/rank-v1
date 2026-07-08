@@ -1,0 +1,18 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "pnpm build",
+  "outputDirectory": ".output/public",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "build": {
+    "env": {
+      "NITRO_PRESET": "static"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://REPLACE_WITH_CONTABO_HOST/api/:path*"
+    }
+  ]
+}

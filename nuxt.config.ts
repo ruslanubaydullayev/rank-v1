@@ -55,8 +55,17 @@ export default defineNuxtConfig({
     ffmpegPath: process.env.FFMPEG_PATH || "ffmpeg",
     ffprobePath: process.env.FFPROBE_PATH || "ffprobe",
 
+    // Instagram (and sometimes TikTok) now require a logged-in session to fetch
+    // even public posts. Provide cookies via one of these:
+    //  - YT_DLP_COOKIES_FROM_BROWSER: a browser name yt-dlp reads cookies from
+    //    (e.g. "chrome", "safari", "firefox", "edge"). Best for local dev.
+    //  - YT_DLP_COOKIES_FILE: path to a Netscape-format cookies.txt file.
+    //    Best for servers/production where no browser is available.
+    ytDlpCookiesFromBrowser: process.env.YT_DLP_COOKIES_FROM_BROWSER || "",
+    ytDlpCookiesFile: process.env.YT_DLP_COOKIES_FILE || "",
+
     limits: {
-      freeRendersPer24h: Number(process.env.FREE_RENDERS_PER_24H || 1),
+      freeRendersPer24h: Number(process.env.FREE_RENDERS_PER_24H || 10),
     },
 
     // --- Public (client + server) ---
@@ -99,11 +108,14 @@ export default defineNuxtConfig({
     "/pricing": { prerender: true },
     "/blog": { prerender: true },
     "/blog/**": { prerender: true },
-    // App / private pages: keep out of the index.
-    "/create": { robots: false },
-    "/account": { robots: false, ssr: true },
-    "/login": { robots: false },
-    "/render/**": { robots: false },
+    "/terms": { prerender: true },
+    "/privacy": { prerender: true },
+    // App / private pages: client-rendered only. On the Vercel deployment the
+    // API lives on another host (proxied), so these must never SSR-fetch it.
+    "/create": { robots: false, ssr: false },
+    "/account": { robots: false, ssr: false },
+    "/login": { robots: false, ssr: false },
+    "/render/**": { robots: false, ssr: false },
     // Never expose the API to crawlers.
     "/api/**": { robots: false },
   },
@@ -113,6 +125,22 @@ export default defineNuxtConfig({
     // Hourly storage retention cleanup (spec §8). Runs on node-server/preview.
     scheduledTasks: {
       "0 * * * *": ["storage:cleanup"],
+    },
+    // Ensure every page has a static entry for the Vercel static build.
+    // Client-only app pages are emitted as SPA shells; marketing pages are
+    // fully prerendered for SEO.
+    prerender: {
+      crawlLinks: true,
+      routes: [
+        "/",
+        "/pricing",
+        "/blog",
+        "/terms",
+        "/privacy",
+        "/login",
+        "/create",
+        "/account",
+      ],
     },
   },
 

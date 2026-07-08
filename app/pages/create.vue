@@ -178,7 +178,7 @@ onBeforeUnmount(stopPolling);
     <Transition name="fade-slide" mode="out-in">
       <!-- Step 1: clips -->
       <div v-if="store.step === 1" key="1">
-        <ClipListBuilder />
+        <CreateClipListBuilder />
         <div class="mt-6 flex justify-end">
           <button
             class="btn-primary"
@@ -203,9 +203,12 @@ onBeforeUnmount(stopPolling);
           <input
             v-model="store.title"
             class="input"
-            maxlength="120"
+            maxlength="40"
             placeholder="Ranking The Funniest School Moments"
           />
+          <p class="mt-1 text-right text-xs text-muted">
+            {{ store.title.length }}/40
+          </p>
           <p class="mt-2 text-sm text-muted">
             Shown at the top of your video for the whole duration.
           </p>
@@ -241,7 +244,7 @@ onBeforeUnmount(stopPolling);
               </li>
             </ol>
           </div>
-          <ClipPreview :title="store.title" :items="store.readyItems" />
+          <CreateClipPreview :title="store.title" :items="store.readyItems" />
         </div>
 
         <p class="mt-4 text-center text-xs text-muted">

@@ -32,6 +32,14 @@ useSchemaOrg([
 
 const faqs = [
   {
+    q: "Is this content monetizable?",
+    a: "Yes. On YouTube you can monetize this type of ranking/countdown content, as long as it meets the YouTube Partner Program requirements and you have the rights to the clips you use. Adding your own title, ranking, and commentary helps keep it original.",
+  },
+  {
+    q: "How do I make money with ranking videos?",
+    a: "Post your ranking shorts to YouTube (Shorts or long-form), TikTok, and Instagram. On YouTube you can earn through ad revenue and Shorts monetization once you qualify for the Partner Program, plus channel memberships, sponsorships, and affiliate links as your audience grows.",
+  },
+  {
     q: "How do I make a ranking video?",
     a: "Add your clips (paste a TikTok/Instagram link or upload a file), give each one a label, set the order, add an overall title, and hit Generate. We render a vertical 9:16 MP4 with numbered badges and captions.",
   },
@@ -71,6 +79,16 @@ const steps = [
     body: "We render a vertical MP4 with numbered badges and captions in ~30s.",
   },
 ];
+
+// Hero carousel — screenshots live in /public (filenames contain spaces).
+// Duplicated once so the marquee can loop seamlessly.
+const slides = [
+  "/screen 1.png",
+  "/screen 2.png",
+  "/screen 3.png",
+  "/screen 4.png",
+].map((s) => encodeURI(s));
+const marquee = [...slides, ...slides];
 </script>
 
 <template>
@@ -112,29 +130,25 @@ const steps = [
           </p>
         </div>
 
-        <!-- Phone mockup -->
-        <div class="flex justify-center">
-          <div
-            class="relative aspect-[9/16] w-64 rounded-[2rem] border-4 border-border bg-black p-3 shadow-2xl shadow-black/60"
-          >
+        <!-- Screenshot carousel (continuous smooth marquee).
+             8 cards (4 duplicated); track is 800% wide on mobile (1 visible)
+             and 400% on sm+ (2 visible). Each card is 1/8 of the track. -->
+        <div class="carousel-mask relative overflow-hidden">
+          <div class="marquee-track flex w-[800%] sm:w-[400%]">
             <div
-              class="flex h-full flex-col overflow-hidden rounded-[1.4rem] bg-gradient-to-b from-neutral-800 to-neutral-900"
+              v-for="(src, i) in marquee"
+              :key="i"
+              class="w-[12.5%] shrink-0 px-2"
             >
               <div
-                class="m-2 rounded-md bg-accent/90 px-2 py-1 text-center text-xs font-bold"
+                class="aspect-[9/16] overflow-hidden rounded-[1.5rem] border-4 border-border bg-black shadow-2xl shadow-black/60"
               >
-                Funniest School Moments
-              </div>
-              <div class="relative flex-1">
-                <span
-                  class="absolute left-3 top-3 flex h-11 w-11 items-center justify-center rounded-lg border-2 border-accent bg-black/40 text-2xl font-black"
-                  >1</span
-                >
-                <div
-                  class="absolute bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/60 px-3 py-1 text-sm font-semibold"
-                >
-                  The substitute teacher
-                </div>
+                <img
+                  :src="src"
+                  alt="Ranking Shorts app screenshot"
+                  loading="lazy"
+                  class="h-full w-full object-cover"
+                />
               </div>
             </div>
           </div>
@@ -194,3 +208,40 @@ const steps = [
     </section>
   </div>
 </template>
+
+<style scoped>
+.marquee-track {
+  animation: marquee 22s linear infinite;
+  will-change: transform;
+}
+/* Pause the loop while the user is pointing at the carousel. */
+.carousel-mask:hover .marquee-track {
+  animation-play-state: paused;
+}
+/* Soft fade at both edges so screenshots slide in/out gracefully. */
+.carousel-mask {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 6%,
+    #000 94%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 6%,
+    #000 94%,
+    transparent
+  );
+}
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    /* Track is duplicated once; shift by half its width for a seamless loop. */
+    transform: translateX(-50%);
+  }
+}
+</style>

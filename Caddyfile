@@ -1,0 +1,13 @@
+# Automatic HTTPS for the backend. CADDY_SITE_ADDRESS is provided via the
+# environment in docker-compose.yml, e.g. 203-0-113-5.sslip.io
+#
+# sslip.io resolves <ip-with-dashes>.sslip.io to that IP, so Caddy can obtain a
+# free Let's Encrypt certificate without owning a domain.
+{$CADDY_SITE_ADDRESS} {
+	encode zstd gzip
+
+	# Stream uploads/downloads to the app without buffering large bodies.
+	reverse_proxy app:3000 {
+		flush_interval -1
+	}
+}

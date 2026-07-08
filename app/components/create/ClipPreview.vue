@@ -6,15 +6,43 @@ const props = defineProps<{
   items: RankingItem[];
 }>();
 
-// Sequentially preview clips. The per-clip label + rank badge are only shown
-// while that clip is the active one — mirroring the final burned-in render.
+// Countdown preview mirroring the burned-in render: the numbered list is always
+// visible; clips play highest-rank-first, and each row's label is revealed once
+// its clip has played (and stays). `current` indexes into the countdown order.
 const current = ref(0);
 const videoEl = ref<HTMLVideoElement | null>(null);
 const playing = ref(false);
 const PLACEHOLDER_MS = 3000;
 let placeholderTimer: ReturnType<typeof setTimeout> | null = null;
 
-const active = computed(() => props.items[current.value] ?? null);
+// Playback order: last item (highest rank / bottom of the list) plays first.
+const order = computed(() => props.items.map((_, i) => i).reverse());
+const activeIndex = computed(() => order.value[current.value] ?? 0);
+const active = computed(() => props.items[activeIndex.value] ?? null);
+// 1-based rank currently on screen (counts down from N to 1).
+const currentRank = computed(() => activeIndex.value + 1);
+
+// A row (1-based rank) is revealed once its clip has played in the countdown.
+function isRevealed(rank: number): boolean {
+  return playing.value && rank >= currentRank.value;
+}
+
+// Vibrant per-rank palette (mirrors the server render in render.ts).
+const PALETTE = [
+  "#ffe14d",
+  "#ff3b5c",
+  "#37d5ff",
+  "#6cff59",
+  "#ff8a1f",
+  "#b98dff",
+  "#ffffff",
+  "#ff4fd8",
+  "#59b0ff",
+  "#ffd23f",
+];
+const colorForRank = (rank: number) => PALETTE[(rank - 1) % PALETTE.length];
+
+const titleWords = computed(() => props.title.split(/\s+/).filter(Boolean));
 
 function clearTimer() {
   if (placeholderTimer) {
@@ -78,7 +106,7 @@ onBeforeUnmount(clearTimer);
         v-if="active?.previewUrl"
         ref="videoEl"
         :src="active.previewUrl"
-        class="h-full w-full object-contain"
+        class="h-full w-full object-cover"
         muted
         playsinline
         @ended="next"
@@ -91,27 +119,41 @@ onBeforeUnmount(clearTimer);
         {{ active ? "Preview on server render" : "Press play to preview" }}
       </div>
 
-      <!-- Overall title (always visible) -->
+      <!-- Black title band: bold, multi-colored words -->
       <div
         v-if="title"
-        class="absolute inset-x-2 top-2 truncate rounded-md bg-accent/90 px-2 py-1 text-center text-xs font-bold"
+        class="absolute inset-x-0 top-0 flex flex-wrap items-center justify-center gap-x-1 bg-black px-2 py-1.5"
       >
-        {{ title }}
+        <span
+          v-for="(word, i) in titleWords"
+          :key="i"
+          class="text-[12px] font-black leading-tight [text-shadow:1px_1px_2px_rgb(0_0_0)]"
+          :style="{ color: PALETTE[i % PALETTE.length] }"
+          >{{ word }}</span
+        >
       </div>
 
-      <!-- Rank badge — only for the active clip -->
-      <span
-        v-if="active && playing"
-        class="absolute left-3 top-12 flex h-11 w-11 items-center justify-center rounded-lg border-2 border-accent bg-black/40 text-2xl font-black"
-        >{{ current + 1 }}</span
-      >
-
-      <!-- Per-clip label — only while its clip is active -->
+      <!-- Ranks burned onto the video: a centered block, big colored numbers
+           with smaller white labels -->
       <div
-        v-if="active && playing && active.label"
-        class="absolute bottom-6 left-1/2 max-w-[90%] -translate-x-1/2 truncate rounded bg-black/60 px-3 py-1 text-center text-sm font-semibold"
+        class="pointer-events-none absolute inset-x-0 bottom-3 top-12 flex flex-col justify-center gap-4 px-2.5"
       >
-        {{ active.label }}
+        <div
+          v-for="(item, idx) in items"
+          :key="item.uid"
+          class="flex items-baseline gap-2 truncate"
+        >
+          <span
+            class="text-4xl font-black leading-none [-webkit-text-stroke:1px_black] [text-shadow:1px_1px_2px_rgb(0_0_0)]"
+            :style="{ color: colorForRank(idx + 1) }"
+            >{{ idx + 1 }}.</span
+          >
+          <span
+            v-if="isRevealed(idx + 1) && item.label"
+            class="truncate text-4xl font-black text-white [text-shadow:1px_1px_2px_rgb(0_0_0)]"
+            >{{ item.label }}</span
+          >
+        </div>
       </div>
     </div>
 
@@ -121,7 +163,8 @@ onBeforeUnmount(clearTimer);
       </button>
       <button v-else class="btn-outline" @click="stop">■ Stop</button>
       <span v-if="playing" class="text-sm text-muted"
-        >Clip {{ current + 1 }} / {{ items.length }}</span
+        >Revealing #{{ currentRank }} ({{ current + 1 }} /
+        {{ items.length }})</span
       >
     </div>
   </div>

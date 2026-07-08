@@ -1,0 +1,60 @@
+services:
+  postgres:
+    image: postgres:16-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ranking}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ranking}
+      POSTGRES_DB: ${POSTGRES_DB:-ranking_shorts}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-ranking} -d ${POSTGRES_DB:-ranking_shorts}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  app:
+    build: .
+    restart: unless-stopped
+    # Runtime secrets/config (copy .env.contabo.example -> .env and fill in).
+    env_file: .env
+    environment:
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      # Persist rendered videos + staged clips across redeploys.
+      - storage:/app/.data/storage
+      # Optional: Instagram/TikTok cookies. Create ./cookies.txt, uncomment this
+      # line, and set YT_DLP_COOKIES_FILE=/app/cookies.txt in .env.
+      # - ./cookies.txt:/app/cookies.txt:ro
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # e.g. 203-0-113-5.sslip.io  (your Contabo IP with dashes)
+      CADDY_SITE_ADDRESS: ${CADDY_SITE_ADDRESS}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  storage:
+  caddy_data:
+  caddy_config:
