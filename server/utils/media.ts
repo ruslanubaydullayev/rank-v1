@@ -147,6 +147,27 @@ export async function probeDurationSeconds(
   return Number.isFinite(val) ? val : null;
 }
 
+/** True if the file has at least one audio stream (ffprobe). */
+export async function hasAudioStream(filePath: string): Promise<boolean> {
+  const bin = useRuntimeConfig().ffprobePath;
+  const res = await runCommand(
+    bin,
+    [
+      "-v",
+      "error",
+      "-select_streams",
+      "a",
+      "-show_entries",
+      "stream=index",
+      "-of",
+      "csv=p=0",
+      filePath,
+    ],
+    { timeoutMs: 20_000 },
+  );
+  return res.code === 0 && res.stdout.trim().length > 0;
+}
+
 export async function fileExists(path: string): Promise<boolean> {
   try {
     await stat(path);

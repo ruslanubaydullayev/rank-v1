@@ -46,7 +46,7 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      # e.g. 203-0-113-5.sslip.io  (your Contabo IP with dashes)
+      # e.g. 203-0-113-5.sslip.io  (your Hetzner IP with dashes)
       CADDY_SITE_ADDRESS: ${CADDY_SITE_ADDRESS}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro

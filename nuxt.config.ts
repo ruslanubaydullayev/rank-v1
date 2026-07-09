@@ -71,6 +71,11 @@ export default defineNuxtConfig({
     // --- Public (client + server) ---
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || "https://rankingshorts.com",
+      // Base URL for API calls. Empty = same-origin (the browser hits the
+      // Vercel frontend, which proxies /api/* to the backend), which keeps
+      // auth cookies first-party. Override only if you call the backend host
+      // directly.
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || "",
       stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
       // Client-side guardrails (also enforced server-side).
       maxRankingItems: Number(process.env.MAX_RANKING_ITEMS || 10),

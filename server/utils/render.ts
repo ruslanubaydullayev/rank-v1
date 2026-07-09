@@ -3,7 +3,12 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { fileExists, runCommand } from "./media";
+import {
+  fileExists,
+  hasAudioStream,
+  probeDurationSeconds,
+  runCommand,
+} from "./media";
 
 export interface RenderClipInput {
   filePath: string; // local path to source clip
@@ -239,6 +244,17 @@ export async function renderRankingVideo(opts: RenderOptions): Promise<void> {
   // Countdown: the highest-ranked clip plays first, #1 plays last.
   const playback = [...opts.clips].sort((a, b) => b.rank - a.rank);
 
+  // Not every clip has an audio track (screen recordings, muted exports, some
+  // downloads). Referencing [i:a] for a silent source makes ffmpeg abort with
+  // "Error binding filtergraph inputs/outputs", so probe each clip and
+  // synthesize silence for the ones without audio.
+  const audioInfo = await Promise.all(
+    playback.map(async (clip) => ({
+      has: await hasAudioStream(clip.filePath),
+      dur: await probeDurationSeconds(clip.filePath),
+    })),
+  );
+
   const inputs: string[] = [];
   const filters: string[] = [];
   const concatLabels: string[] = [];
@@ -292,13 +308,25 @@ export async function renderRankingVideo(opts: RenderOptions): Promise<void> {
         `[${vlabel}]`,
     );
 
-    // Provide a silent audio track if the source has none, so concat is safe.
+    // Audio: use the real track when present, otherwise synthesize silence of
+    // the same length so every concat segment has a valid [v][a] pair.
     const alabel = `a${i}`;
-    filters.push(
-      `[${i}:a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,asetpts=PTS-STARTPTS${
-        cap > 0 ? `,atrim=duration=${cap}` : ""
-      }[${alabel}]`,
-    );
+    const { has: hasAud, dur } = audioInfo[i] ?? { has: false, dur: null };
+    const aFormat =
+      "aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo";
+    if (hasAud) {
+      filters.push(
+        `[${i}:a]${aFormat},asetpts=PTS-STARTPTS${
+          cap > 0 ? `,atrim=duration=${cap}` : ""
+        }[${alabel}]`,
+      );
+    } else {
+      // Match the segment's video duration (bounded by cap when set).
+      const segDur = cap > 0 ? Math.min(cap, dur ?? cap) : (dur ?? 30);
+      filters.push(
+        `anullsrc=r=44100:cl=stereo:d=${segDur},${aFormat},asetpts=PTS-STARTPTS[${alabel}]`,
+      );
+    }
 
     concatLabels.push(`[${vlabel}][${alabel}]`);
   });
@@ -332,8 +360,6 @@ export async function renderRankingVideo(opts: RenderOptions): Promise<void> {
     opts.outPath,
   ];
 
-  // Missing/absent audio streams make [i:a] mapping fail; fall back to a
-  // video-only concat with generated silence if the first attempt errors.
   const res = await runCommand(ffmpeg, args, { timeoutMs: 10 * 60_000 });
   if (res.timedOut) {
     throw new Error("Render timed out");

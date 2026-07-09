@@ -7,7 +7,8 @@ import { upsertUserFromGoogle } from "~~/server/utils/users";
  *
  * The API runs behind the Vercel proxy on a different host than the browser,
  * so we pin redirectURL to the public site URL. Otherwise nuxt-auth-utils would
- * derive it from the internal request host (Contabo) and Google would reject it.
+ * derive it from the internal request host (the Hetzner backend) and Google
+ * would reject it.
  */
 const siteUrl = (
   process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000"

@@ -12,7 +12,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://REPLACE_WITH_CONTABO_HOST/api/:path*"
+      "destination": "https://REPLACE_WITH_BACKEND_HOST/api/:path*"
     }
   ]
 }

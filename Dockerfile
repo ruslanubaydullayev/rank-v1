@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-# Backend image for Contabo: Nuxt/Nitro server + the render pipeline binaries.
+# Backend image for the Hetzner VPS: Nitro server + the render pipeline binaries.
 FROM node:22-bookworm-slim
 
 # System deps:

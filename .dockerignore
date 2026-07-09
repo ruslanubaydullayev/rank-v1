@@ -7,7 +7,7 @@ dist
 .gitignore
 .env
 .env.*
-!.env.contabo.example
+!.env.hetzner.example
 npm-debug.log*
 pnpm-debug.log*
 .DS_Store
